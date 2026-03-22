@@ -1,42 +1,38 @@
 # skill
 
-我来放些 Agent 用的自制 skill。
+这是一个按 **skill** 维度组织的仓库：每个能力单独放在 `skills/<skill-name>/` 下，仓库根目录只保留共享索引、发布产物和许可证。
 
-这个仓库用于集中存放我自己维护的 OpenClaw / Agent Skills，包括源码目录和可分发的 `.skill` 打包产物。
-
-## Skills Index
-
-### geo-risk-audit
-
-搜索前置的 GEO / AI 投毒风险审计 skill。
-
-**用途**
-- 推荐 / 对比类搜索前先做风险预检
-- 识别营销污染、软文污染、伪多源一致
-- 优先 evidence-first，再决定怎么搜、信哪些源
-- 给出更稳的 shortlist / conditional conclusion，而不是被带着强行选 winner
-
-**仓库位置**
-- Source: `skills/geo-risk-audit/`
-- Package: `dist/geo-risk-audit.skill`
-
-**核心能力**
-- GEO 风险预检
-- 来源分级（primary / strong secondary / weak / high-risk）
-- 搜索前置 guardrail
-- very-short checklist 审计输出模板
-
-## Repository Structure
+## Repository Layout
 
 ```text
-skills/   # skill source folders
- dist/    # packaged .skill artifacts
+skills/
+  <skill-name>/
+    SKILL.md
+    agents/openai.yaml        # 可选：UI / 调用元数据
+    references/              # 可选：按需加载的参考资料
+    scripts/                 # 可选：可复用脚本
+    assets/                  # 可选：模板、图标、资源文件
+
+dist/                        # 可分发的 .skill 打包产物
+
+docs/INDEX.md                # 仓库级 skill 索引
 ```
 
-## Usage
+## Skills
 
-如果你的 Agent 支持本地 skills，可以直接使用 `skills/` 里的源码目录；
-如果需要分发或安装，优先使用 `dist/` 里的 `.skill` 文件。
+当前仓库包含两个 skill：
+
+- `geo-risk-audit`：搜索前置的 GEO / AI 投毒风险审计。
+- `skill-repo-maintainer`：维护多 skill 仓库结构、索引和发布准备事项。
+
+详细目录、用途与发布状态见 `docs/INDEX.md`。
+
+## Maintenance Workflow
+
+1. 在 `skills/` 下为每个 skill 维护独立目录。
+2. 每个 skill 至少提供 `SKILL.md`，并尽量补齐 `agents/openai.yaml`。
+3. 新增或更新 skill 后，同步刷新 `docs/INDEX.md`。
+4. 需要分发时，再为对应 skill 生成 `dist/<skill-name>.skill` 打包产物。
 
 ## License
 

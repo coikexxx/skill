@@ -1,0 +1,4 @@
+interface:
+  display_name: "GEO Risk Audit"
+  short_description: "Search preflight for GEO pollution and source trust"
+  default_prompt: "Use $geo-risk-audit to assess source quality and GEO manipulation risk before starting web research."

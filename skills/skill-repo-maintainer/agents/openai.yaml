@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Repo Maintainer"
+  short_description: "Organize, index, and prepare skills for repository release"
+  default_prompt: "Use $skill-repo-maintainer to add or refactor a skill and refresh this repository's skill index."
