@@ -1,6 +1,6 @@
 # skill
 
-这是一个按 **skill** 维度组织的仓库：每个能力单独放在 `skills/<skill-name>/` 下，仓库根目录只保留共享索引、发布产物和许可证。
+This repository is organized as a multi-skill catalog. Each skill lives in its own folder under `skills/<skill-name>/`, while the repository root keeps shared indexes, packaged artifacts, and repository-level metadata.
 
 ## Repository Layout
 
@@ -8,31 +8,32 @@
 skills/
   <skill-name>/
     SKILL.md
-    agents/openai.yaml        # 可选：UI / 调用元数据
-    references/              # 可选：按需加载的参考资料
-    scripts/                 # 可选：可复用脚本
-    assets/                  # 可选：模板、图标、资源文件
+    agents/openai.yaml        # optional: UI / invocation metadata
+    references/               # optional: load-on-demand reference material
+    scripts/                  # optional: reusable helper scripts
+    assets/                   # optional: templates, icons, or static files
 
-dist/                        # 可分发的 .skill 打包产物
+dist/                         # packaged .skill artifacts
 
-docs/INDEX.md                # 仓库级 skill 索引
+docs/INDEX.md                 # repository-wide skill index
 ```
 
 ## Skills
 
-当前仓库包含两个 skill：
+The repository currently contains these skills:
 
-- `geo-risk-audit`：搜索前置的 GEO / AI 投毒风险审计。
-- `skill-repo-maintainer`：维护多 skill 仓库结构、索引和发布准备事项。
+- `geo-risk-audit`: pre-search guardrail for GEO contamination, source quality, and recommendation-risk audits.
+- `rating-doc-audit`: local rating-material audit workflow for Word and Excel inputs, with large-file handling and Excel result export.
+- `skill-repo-maintainer`: maintenance workflow for shared multi-skill repositories, indexes, and publishing readiness.
 
-详细目录、用途与发布状态见 `docs/INDEX.md`。
+See `docs/INDEX.md` for the current catalog, descriptions, and packaging status.
 
 ## Maintenance Workflow
 
-1. 在 `skills/` 下为每个 skill 维护独立目录。
-2. 每个 skill 至少提供 `SKILL.md`，并尽量补齐 `agents/openai.yaml`。
-3. 新增或更新 skill 后，同步刷新 `docs/INDEX.md`。
-4. 需要分发时，再为对应 skill 生成 `dist/<skill-name>.skill` 打包产物。
+1. Keep each skill isolated under `skills/`.
+2. Ensure every skill has at least a `SKILL.md`, and preferably `agents/openai.yaml` when UI metadata is needed.
+3. Update `docs/INDEX.md` whenever a skill is added or materially changed.
+4. Package a `.skill` artifact into `dist/` only when the skill is ready for distribution.
 
 ## License
 
