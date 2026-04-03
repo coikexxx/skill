@@ -73,15 +73,27 @@ def run_tesseract(image_path: Path) -> tuple[str, str]:
     if not tesseract:
         return "skipped", ""
 
-    result = subprocess.run(
-        [tesseract, str(image_path), "stdout"],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    helper = os.environ.get("FAKE_TESSERACT_HELPER")
+    if helper:
+        result = subprocess.run(
+            [tesseract, helper, str(image_path)],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    else:
+        result = subprocess.run(
+            [tesseract, str(image_path), "stdout"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
     if result.returncode != 0:
         return "failed", (result.stderr or result.stdout).strip()
-    return "ok", result.stdout.strip()
+    text = result.stdout.strip()
+    if not text:
+        return "empty", ""
+    return "ok", text
 
 
 def extract_docx_text(docx_path: Path, temp_root: Path | None = None) -> str:
@@ -163,8 +175,13 @@ def extract_docx_text(docx_path: Path, temp_root: Path | None = None) -> str:
             lines.append(f"anchor_previous: {previous_text}")
             lines.append(f"anchor_next: {next_text}")
             lines.append(f"ocr_status: {ocr_status}")
-            if ocr_text:
-                lines.append(f"ocr_text: {ocr_text}")
+            lines.append(f"ocr_text: {ocr_text}")
+            if ocr_status == "skipped":
+                lines.append("ocr_note: tesseract unavailable, embedded image content not audited")
+            elif ocr_status == "empty":
+                lines.append("ocr_note: OCR ran but returned no text")
+            elif ocr_status == "failed":
+                lines.append("ocr_note: OCR execution failed; inspect ocr_text for details")
 
         return "\n".join(line for line in lines if line).strip() + ("\n" if lines else "")
 

@@ -41,6 +41,21 @@ def no_soffice_env() -> dict[str, str]:
     return env
 
 
+def fake_tesseract_env(helper_output: str) -> dict[str, str]:
+    helper_path = TEST_TMP_ROOT / "fake_tesseract.py"
+    helper_path.parent.mkdir(parents=True, exist_ok=True)
+    helper_path.write_text(
+        "import sys\n"
+        f"sys.stdout.write({helper_output!r})\n",
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env["TESSERACT_PATH"] = sys.executable
+    env["PYTHONUTF8"] = "1"
+    env["FAKE_TESSERACT_HELPER"] = str(helper_path.resolve())
+    return env
+
+
 def write_minimal_docx(path: Path) -> None:
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr(
@@ -210,6 +225,25 @@ class RatingDocAuditPortabilityTests(unittest.TestCase):
         self.assertIn("[image-001]", exported)
         self.assertIn("anchor_previous", exported)
         self.assertIn("ocr_status: skipped", exported)
+
+    def test_export_docx_text_reports_empty_ocr_explicitly(self) -> None:
+        docx_path = self.test_dir / "image-empty-ocr.docx"
+        output_path = self.test_dir / "image-empty-ocr.txt"
+        write_docx_with_inline_image(docx_path)
+
+        helper = self.test_dir / "fake_tesseract.py"
+        helper.write_text("import sys\nsys.stdout.write('')\n", encoding="utf-8")
+        env = os.environ.copy()
+        env["TESSERACT_PATH"] = sys.executable
+        env["FAKE_TESSERACT_HELPER"] = str(helper.resolve())
+
+        result = run_python_script(EXPORT_DOCX_TEXT, str(docx_path), str(output_path), env=env)
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        exported = output_path.read_text(encoding="utf-8")
+        self.assertIn("ocr_status: empty", exported)
+        self.assertIn("ocr_text:", exported)
+        self.assertIn("ocr_note:", exported)
 
     def test_export_review_text_uses_python_for_docx_without_soffice(self) -> None:
         docx_path = self.test_dir / "review.docx"
