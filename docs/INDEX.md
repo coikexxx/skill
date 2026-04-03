@@ -3,7 +3,7 @@
 | Skill | Type | Source | Package | Status |
 | --- | --- | --- | --- | --- |
 | `geo-risk-audit` | search guardrail / source audit | `../skills/geo-risk-audit/` | `../dist/geo-risk-audit.skill` | packaged |
-| `rating-doc-audit` | local document audit / Excel export | `../skills/rating-doc-audit/` | _not packaged yet_ | source only |
+| `rating-doc-audit` | local document audit / Excel export | `../skills/rating-doc-audit/` | `../dist/rating-doc-audit.skill` | packaged |
 | `skill-repo-maintainer` | repository maintenance / publishing checklist | `../skills/skill-repo-maintainer/` | _not packaged yet_ | source only |
 
 ## geo-risk-audit
