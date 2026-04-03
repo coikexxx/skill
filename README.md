@@ -26,8 +26,10 @@ docs/INDEX.md                 # 仓库级 skill 索引
   - 用途：在做搜索、推荐、比较、可信度判断之前，先做 GEO 污染和来源质量审计。
 - `rating-doc-audit`
   - 用途：对本地评级审核材料做结构化审计，支持标准工作簿检查、文档文本导出、大文本分块和 Excel 结果导出。
-  - Linux / macOS 说明：当前版本以 Python 为主干，`.docx` 优先走 Python 解析，`.doc` 和 `.xls` 依赖 `soffice`，`.xlsx` / `.xlsm` 直接走 Python。
-  - Windows 说明：仍保留 PowerShell + Office COM 兼容路径。
+  - Linux / macOS：当前版本以 Python 为主干，`.docx` 优先走 Python 解析，`.doc` 和 `.xls` 依赖 `soffice`，`.xlsx` / `.xlsm` 直接走 Python。
+  - 最新验证：在 Ubuntu 24.04 + Python 3.12.3 + `/usr/bin/soffice` 环境下，`.docx`、`.doc`、`.xlsx`、`.xls`、文本分块和结果写回主链已基本跑通。
+  - 当前已知小问题：`list_workspace_files.py --help` 仍有 CLI 入口异常，需要后续修正。
+  - Windows：仍保留 PowerShell + Office COM 兼容路径。
 - `skill-repo-maintainer`
   - 用途：维护多 skill 仓库结构、索引和发布准备流程。
 
@@ -67,6 +69,8 @@ docs/INDEX.md                 # repository-wide skill index
 - `rating-doc-audit`
   - Purpose: a structured audit workflow for local rating-review materials, including workbook inspection, document text export, large-text chunking, and Excel result export.
   - Linux / macOS: the current version uses Python as the main control path. `.docx` prefers Python parsing first, `.doc` and `.xls` depend on `soffice`, and `.xlsx` / `.xlsm` stay on the direct Python path.
+  - Latest verification: on Ubuntu 24.04 with Python 3.12.3 and `soffice` at `/usr/bin/soffice`, the core path for `.docx`, `.doc`, `.xlsx`, `.xls`, chunking, and Excel result export has been validated end to end.
+  - Known minor issue: `list_workspace_files.py --help` still has a CLI help-entry bug and needs a follow-up fix.
   - Windows: PowerShell + Office COM compatibility paths are still preserved.
 - `skill-repo-maintainer`
   - Purpose: maintain shared multi-skill repository structure, indexes, and release-readiness workflows.
