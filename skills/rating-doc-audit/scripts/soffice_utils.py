@@ -25,6 +25,14 @@ def convert_with_soffice(input_path: Path, output_dir: Path, convert_to: str) ->
         raise RuntimeError("This conversion requires soffice, but no soffice executable was found.")
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    helper = os.environ.get("FAKE_SOFFICE_HELPER")
+    if helper:
+        return subprocess.run(
+            [soffice, helper, "--headless", "--convert-to", convert_to, "--outdir", str(output_dir), str(input_path)],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
     return subprocess.run(
         [soffice, "--headless", "--convert-to", convert_to, "--outdir", str(output_dir), str(input_path)],
         text=True,

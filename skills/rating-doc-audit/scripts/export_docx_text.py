@@ -96,13 +96,13 @@ def run_tesseract(image_path: Path) -> tuple[str, str]:
     return "ok", text
 
 
-def extract_docx_text(docx_path: Path, temp_root: Path | None = None) -> str:
+def _extract_docx_blocks(docx_path: Path) -> list[dict]:
     with zipfile.ZipFile(docx_path) as archive:
         root = ET.fromstring(archive.read("word/document.xml"))
         relationships = load_relationships(archive)
         body = root.find("w:body", WORD_NS)
         if body is None:
-            return ""
+            return []
 
         blocks: list[dict] = []
         image_counter = 0
@@ -139,13 +139,18 @@ def extract_docx_text(docx_path: Path, temp_root: Path | None = None) -> str:
                                 "table_context": context,
                             }
                         )
+        return blocks
 
-        lines: list[str] = []
-        tesseract = find_tesseract()
 
+def _render_docx_blocks(docx_path: Path, blocks: list[dict], temp_root: Path | None, include_text_blocks: bool) -> str:
+    lines: list[str] = []
+    tesseract = find_tesseract()
+
+    with zipfile.ZipFile(docx_path) as archive:
         for index, block in enumerate(blocks):
             if block["type"] == "text":
-                lines.append(block["text"])
+                if include_text_blocks:
+                    lines.append(block["text"])
                 continue
 
             previous_text = ""
@@ -183,7 +188,17 @@ def extract_docx_text(docx_path: Path, temp_root: Path | None = None) -> str:
             elif ocr_status == "failed":
                 lines.append("ocr_note: OCR execution failed; inspect ocr_text for details")
 
-        return "\n".join(line for line in lines if line).strip() + ("\n" if lines else "")
+    return "\n".join(line for line in lines if line).strip() + ("\n" if lines else "")
+
+
+def extract_docx_image_report(docx_path: Path, temp_root: Path | None = None) -> str:
+    blocks = _extract_docx_blocks(docx_path)
+    return _render_docx_blocks(docx_path, blocks, temp_root=temp_root, include_text_blocks=False)
+
+
+def extract_docx_text(docx_path: Path, temp_root: Path | None = None) -> str:
+    blocks = _extract_docx_blocks(docx_path)
+    return _render_docx_blocks(docx_path, blocks, temp_root=temp_root, include_text_blocks=True)
 
 
 def main() -> int:

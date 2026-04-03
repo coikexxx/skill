@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
 
-from export_docx_text import extract_docx_text
+from export_docx_text import extract_docx_image_report, extract_docx_text
 from soffice_utils import convert_with_soffice, find_soffice
 
 
 def export_with_python_docx(input_path: Path, output_path: Path) -> dict:
+    if os.environ.get("FORCE_DOCX_PYTHON_FAIL") == "1":
+        raise RuntimeError("Forced .docx Python export failure for testing.")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(extract_docx_text(input_path), encoding="utf-8")
     return {
@@ -30,6 +33,16 @@ def export_with_soffice(input_path: Path, output_path: Path) -> dict:
 
     if soffice_output.resolve() != output_path.resolve():
         shutil.move(str(soffice_output), str(output_path))
+
+    if input_path.suffix.lower() == ".docx":
+        temp_root = output_path.parent / ".ocr-tmp"
+        image_report = extract_docx_image_report(input_path, temp_root=temp_root)
+        if temp_root.exists():
+            shutil.rmtree(temp_root, ignore_errors=True)
+        if image_report.strip():
+            existing = output_path.read_text(encoding="utf-8", errors="replace")
+            separator = "" if existing.endswith("\n") or not existing else "\n"
+            output_path.write_text(existing + separator + image_report, encoding="utf-8")
 
     return {
         "input_path": str(input_path.resolve()),

@@ -56,6 +56,25 @@ def fake_tesseract_env(helper_output: str) -> dict[str, str]:
     return env
 
 
+def fake_soffice_env(output_text: str) -> dict[str, str]:
+    helper_path = TEST_TMP_ROOT / "fake_soffice.py"
+    helper_path.parent.mkdir(parents=True, exist_ok=True)
+    helper_path.write_text(
+        "import sys\n"
+        "from pathlib import Path\n"
+        "args = sys.argv[1:]\n"
+        "outdir = Path(args[args.index('--outdir') + 1])\n"
+        "input_path = Path(args[-1])\n"
+        f"(outdir / (input_path.stem + '.txt')).write_text({output_text!r}, encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env["SOFFICE_PATH"] = sys.executable
+    env["FAKE_SOFFICE_HELPER"] = str(helper_path.resolve())
+    env["FORCE_DOCX_PYTHON_FAIL"] = "1"
+    return env
+
+
 def write_minimal_docx(path: Path) -> None:
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr(
@@ -257,6 +276,23 @@ class RatingDocAuditPortabilityTests(unittest.TestCase):
         self.assertEqual(payload["method"], "python-docx-xml")
         exported = output_path.read_text(encoding="utf-8")
         self.assertIn(FIRST_PARAGRAPH, exported)
+
+    def test_export_review_text_soffice_fallback_still_appends_image_status(self) -> None:
+        docx_path = self.test_dir / "review-fallback.docx"
+        output_path = self.test_dir / "review-fallback.txt"
+        write_docx_with_inline_image(docx_path)
+
+        env = fake_soffice_env("正文由 soffice 导出\n")
+        result = run_python_script(EXPORT_REVIEW_TEXT, str(docx_path), str(output_path), env=env)
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["method"], "soffice")
+        exported = output_path.read_text(encoding="utf-8")
+        self.assertIn("正文由 soffice 导出", exported)
+        self.assertIn("[image-001]", exported)
+        self.assertIn("ocr_status:", exported)
+        self.assertIn("anchor_previous:", exported)
 
     def test_export_review_text_blocks_doc_without_soffice(self) -> None:
         doc_path = self.test_dir / "legacy.doc"
