@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rating Doc Audit"
+  short_description: "Audit rating docs against chosen standards."
+  default_prompt: "Use $rating-doc-audit to scan the workspace, let me choose a review document and rating standard, then export the audit findings to Excel."
