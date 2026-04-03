@@ -14,6 +14,14 @@ These steps do not require `soffice` or Office COM:
 - `scripts/write_audit_xlsx.py`
 - `scripts/export_docx_text.py` for `.docx`
 
+## Local OCR
+
+For `.docx` files with embedded screenshots or images:
+
+- prefer local OCR through `tesseract`
+- keep the OCR result bound to nearby text anchors instead of appending it as an unrelated global appendix
+- if `tesseract` is unavailable, continue the plain-text review path but state clearly that image content was skipped
+
 ## Routed Document Export
 
 - `.docx`: prefer Python parsing through `scripts/export_review_text.py`

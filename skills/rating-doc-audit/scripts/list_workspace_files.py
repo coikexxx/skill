@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
+import argparse
 import json
-import sys
+from datetime import datetime
 from pathlib import Path
 
 
@@ -23,14 +24,18 @@ def get_candidate_files(base_path: Path, extensions: set[str]) -> list[dict]:
                 "extension": path.suffix,
                 "size_bytes": stat.st_size,
                 "size_mb": round(stat.st_size / (1024 * 1024), 2),
-                "last_write_time": __import__("datetime").datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
+                "last_write_time": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
             }
         )
     return items
 
 
 def main() -> int:
-    workspace = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path.cwd().resolve()
+    parser = argparse.ArgumentParser(description="Scan the workspace for rating review documents and standard workbooks.")
+    parser.add_argument("workspace", nargs="?", default=".", help="Workspace root to scan")
+    args = parser.parse_args()
+
+    workspace = Path(args.workspace).resolve()
     review_folder = workspace / REVIEW_FOLDER_NAME
     standard_folder = workspace / STANDARD_FOLDER_NAME
 

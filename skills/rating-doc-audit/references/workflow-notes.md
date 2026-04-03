@@ -37,6 +37,13 @@ Route document export like this:
 
 If `.docx` parsing fails and `soffice` is unavailable, stop and report the blocker clearly.
 
+For `.docx` files with embedded images:
+
+- keep each image tied to its nearby paragraph or table context
+- when table context is available, prefer the table text as the primary anchor
+- include image id plus `anchor_previous` / `anchor_next` style context in the exported review text
+- if OCR is skipped, say so inline so reviewers know the screenshot content was not audited
+
 ## Large Document Review
 
 For huge files, use this sequence:

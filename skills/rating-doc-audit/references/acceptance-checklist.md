@@ -13,6 +13,7 @@ Run this checklist before claiming the skill or its scripts are ready.
 - Confirm `scripts/list_workspace_files.py` is the default scan entrypoint.
 - Confirm `scripts/export_review_text.py` prefers Python for `.docx` and requires `soffice` for `.doc`.
 - Confirm `scripts/prepare_standard_workbook.py` keeps `.xlsx` / `.xlsm` on the direct Python path and routes `.xls` through `soffice`.
+- Confirm `scripts/export_docx_text.py` includes embedded-image OCR blocks with location anchors for `.docx`.
 - Confirm `scripts/write_audit_xlsx.py` writes worksheet `审核结果`.
 - Confirm the output columns are exactly `问题`, `问题描述`, `问题出处`.
 - Confirm `SKILL.md` uses the same folder names, sheet name, and output headers as the scripts.
@@ -41,14 +42,18 @@ Run this checklist before claiming the skill or its scripts are ready.
    - Run `export_review_text.py` on a `.doc` file without `soffice`.
    - Verify it fails clearly and reports the blocker.
 
-5. Legacy `.xls` blocker scenario
+5. `.docx` image-anchor scenario
+   - Run `export_docx_text.py` on a `.docx` that contains an embedded image.
+   - Verify the exported text contains the image id, nearby anchors, and OCR status.
+
+6. Legacy `.xls` blocker scenario
    - Run `prepare_standard_workbook.py` on a `.xls` file without `soffice`.
    - Verify it fails clearly and reports the blocker.
 
-6. Large text scenario
+7. Large text scenario
    - Run `chunk_text.py` on a large exported document.
    - Verify `manifest.json` is created and each chunk records line ranges.
 
-7. Result workbook scenario
+8. Result workbook scenario
    - Generate a workbook from sample findings JSON.
    - Verify the file opens normally and the worksheet and column headers match the contract.

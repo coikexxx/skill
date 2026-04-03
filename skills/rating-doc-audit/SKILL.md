@@ -21,6 +21,7 @@ Portable support on Linux and macOS depends on `soffice` for the legacy formats 
 - `.doc`: requires `soffice`.
 - `.xlsx` and `.xlsm`: inspect directly with Python.
 - `.xls`: requires `soffice`.
+- `.docx` screenshots and embedded images: prefer local OCR through `tesseract` when available.
 
 Windows-only scripts remain available as compatibility fallbacks:
 
@@ -46,6 +47,7 @@ If the current environment lacks `soffice`, continue with the Python-only subset
 6. Export the selected review document to text with `{baseDir}/scripts/export_review_text.py`.
    - `.docx` uses Python first.
    - `.doc` routes through `soffice`.
+   - For `.docx`, the exported review text should also include embedded-image OCR blocks with image ids and nearby text anchors when local OCR is available.
 7. If the extracted text is too large for comfortable review, split it with `{baseDir}/scripts/chunk_text.py` and review chunk by chunk instead of loading the whole file into context.
 8. Evaluate the document against the chosen rating standard and the optional user prompt.
 9. Save findings to JSON first, then write the final workbook with `{baseDir}/scripts/write_audit_xlsx.py`.
@@ -58,6 +60,7 @@ If the current environment lacks `soffice`, continue with the Python-only subset
 - When the standard is ambiguous, mark the finding as a risk or clarification need instead of a definite violation.
 - If parsing fails or a required converter is unavailable, report the exact blocker and stop before the audit stage.
 - Do not imply that `soffice` is required for `.docx`, `.xlsx`, or `.xlsm` when the direct Python path is available.
+- If `tesseract` is unavailable, continue the text-based review but explicitly state that embedded-image content was not included in the audit.
 
 ## Large-File Handling
 
@@ -94,7 +97,7 @@ The final workbook must contain one worksheet named `审核结果` with these th
 - `{baseDir}/scripts/list_workspace_files.py`: cross-platform workspace scan and the default scan entrypoint
 - `{baseDir}/scripts/prepare_standard_workbook.py`: route `.xlsx` / `.xlsm` directly and convert `.xls` via `soffice` when needed
 - `{baseDir}/scripts/export_review_text.py`: route `.docx` through Python first and `.doc` through `soffice`
-- `{baseDir}/scripts/export_docx_text.py`: direct Python `.docx` text export
+- `{baseDir}/scripts/export_docx_text.py`: direct Python `.docx` text export plus embedded-image OCR blocks and anchor metadata
 - `{baseDir}/scripts/inspect_xlsx.py`: inspect workbook structure and preview rows without third-party packages
 - `{baseDir}/scripts/chunk_text.py`: split very large extracted text into manageable chunks with a manifest
 - `{baseDir}/scripts/write_audit_xlsx.py`: write the final Excel result workbook without external dependencies

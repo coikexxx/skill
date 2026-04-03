@@ -19,6 +19,8 @@ REVIEW_DIR_NAME = "\u8bc4\u7ea7\u5ba1\u6838\u6587\u4ef6"
 STANDARD_DIR_NAME = "\u8bc4\u7ea7\u6807\u51c6\u6587\u4ef6"
 FIRST_PARAGRAPH = "\u7b2c\u4e00\u6bb5"
 SECOND_PARAGRAPH = "\u7b2c\u4e8c\u6bb5"
+IMAGE_ANCHOR_PARAGRAPH = "\u62b5\u62bc\u7269\u622a\u56fe\u8bf4\u660e"
+FOLLOW_UP_PARAGRAPH = "\u622a\u56fe\u4e0b\u65b9\u7eed\u5199"
 
 
 def run_python_script(script: Path, *args: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -69,6 +71,73 @@ def write_minimal_docx(path: Path) -> None:
         )
 
 
+def write_docx_with_inline_image(path: Path) -> None:
+    image_bytes = (
+        b"\x89PNG\r\n\x1a\n"
+        b"\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde"
+        b"\x00\x00\x00\x0cIDAT\x08\x99c\xf8\xff\xff?\x00\x05\xfe\x02\xfeA\xa5\x1f\x9b"
+        b"\x00\x00\x00\x00IEND\xaeB`\x82"
+    )
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr(
+            "[Content_Types].xml",
+            """<?xml version="1.0" encoding="UTF-8"?>
+            <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+              <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+              <Default Extension="xml" ContentType="application/xml"/>
+              <Default Extension="png" ContentType="image/png"/>
+              <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+            </Types>""",
+        )
+        archive.writestr(
+            "_rels/.rels",
+            """<?xml version="1.0" encoding="UTF-8"?>
+            <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+              <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+            </Relationships>""",
+        )
+        archive.writestr(
+            "word/_rels/document.xml.rels",
+            """<?xml version="1.0" encoding="UTF-8"?>
+            <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+              <Relationship Id="rIdImage1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image1.png"/>
+            </Relationships>""",
+        )
+        archive.writestr(
+            "word/document.xml",
+            f"""<?xml version="1.0" encoding="UTF-8"?>
+            <w:document
+              xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+              xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+              xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+              xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+              xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+              <w:body>
+                <w:p><w:r><w:t>{IMAGE_ANCHOR_PARAGRAPH}</w:t></w:r></w:p>
+                <w:p>
+                  <w:r>
+                    <w:drawing>
+                      <wp:inline>
+                        <a:graphic>
+                          <a:graphicData>
+                            <pic:pic>
+                              <pic:blipFill>
+                                <a:blip r:embed="rIdImage1"/>
+                              </pic:blipFill>
+                            </pic:pic>
+                          </a:graphicData>
+                        </a:graphic>
+                      </wp:inline>
+                    </w:drawing>
+                  </w:r>
+                </w:p>
+                <w:p><w:r><w:t>{FOLLOW_UP_PARAGRAPH}</w:t></w:r></w:p>
+              </w:body>
+            </w:document>""",
+        )
+        archive.writestr("word/media/image1.png", image_bytes)
+
+
 class RatingDocAuditPortabilityTests(unittest.TestCase):
     def setUp(self) -> None:
         self.test_dir = TEST_TMP_ROOT / self._testMethodName
@@ -109,6 +178,12 @@ class RatingDocAuditPortabilityTests(unittest.TestCase):
         self.assertEqual(payload["review_folder"]["files"][0]["name"], "sample.docx")
         self.assertEqual(payload["standard_folder"]["files"][0]["name"], "standard.xlsx")
 
+    def test_list_workspace_files_help_works(self) -> None:
+        result = run_python_script(LIST_WORKSPACE_FILES, "--help")
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("usage:", result.stdout)
+
     def test_export_docx_text_extracts_paragraph_text(self) -> None:
         docx_path = self.test_dir / "sample.docx"
         output_path = self.test_dir / "sample.txt"
@@ -120,6 +195,21 @@ class RatingDocAuditPortabilityTests(unittest.TestCase):
         exported = output_path.read_text(encoding="utf-8")
         self.assertIn(FIRST_PARAGRAPH, exported)
         self.assertIn(SECOND_PARAGRAPH, exported)
+
+    def test_export_docx_text_includes_image_anchor_and_ocr_status(self) -> None:
+        docx_path = self.test_dir / "image-bound.docx"
+        output_path = self.test_dir / "image-bound.txt"
+        write_docx_with_inline_image(docx_path)
+
+        result = run_python_script(EXPORT_DOCX_TEXT, str(docx_path), str(output_path), env=no_soffice_env())
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        exported = output_path.read_text(encoding="utf-8")
+        self.assertIn(IMAGE_ANCHOR_PARAGRAPH, exported)
+        self.assertIn(FOLLOW_UP_PARAGRAPH, exported)
+        self.assertIn("[image-001]", exported)
+        self.assertIn("anchor_previous", exported)
+        self.assertIn("ocr_status: skipped", exported)
 
     def test_export_review_text_uses_python_for_docx_without_soffice(self) -> None:
         docx_path = self.test_dir / "review.docx"
