@@ -2,7 +2,7 @@
 
 ## Scan And Select
 
-Run `scripts/list_workspace_files.ps1` at the workspace root.
+Use `scripts/list_workspace_files.py` as the default scan entrypoint.
 
 - Present review documents and standards separately.
 - Preserve the reported `index` values so the user can choose by number.
@@ -18,11 +18,30 @@ After previewing the workbook:
 
 Translate the selected sheet content into a practical checklist before reviewing the document.
 
+## Standard Routing
+
+Route workbook preparation like this:
+
+1. `.xlsx`: inspect directly
+2. `.xlsm`: inspect directly
+3. `.xls`: run `scripts/prepare_standard_workbook.py` and let it convert through `soffice`
+
+Do not route `.xlsx` or `.xlsm` through `soffice` by default.
+
+## Review Document Routing
+
+Route document export like this:
+
+1. `.docx`: run `scripts/export_review_text.py`, which should try Python first
+2. `.doc`: run `scripts/export_review_text.py`, which should require `soffice`
+
+If `.docx` parsing fails and `soffice` is unavailable, stop and report the blocker clearly.
+
 ## Large Document Review
 
 For huge files, use this sequence:
 
-1. Export the Word file to text.
+1. Export the review file to text.
 2. Chunk the text to disk.
 3. Review chunk by chunk.
 4. Keep an accumulating finding list in JSON on disk.
